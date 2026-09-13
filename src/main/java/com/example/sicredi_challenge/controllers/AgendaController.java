@@ -1,5 +1,6 @@
 package com.example.sicredi_challenge.controllers;
 
+import com.example.sicredi_challenge.entities.dtos.AgendaResultResponse;
 import com.example.sicredi_challenge.entities.dtos.CreateAgendaRequest;
 import com.example.sicredi_challenge.entities.dtos.CreateAgendaResponse;
 import com.example.sicredi_challenge.entities.dtos.UpdateAgendaRequest;
@@ -36,6 +37,12 @@ public class AgendaController {
     @PostMapping("/agendas/{id}/votes")
     public ResponseEntity<VoteResponse> vote(@PathVariable Long id, @RequestBody VoteRequest voteRequest) {
         VoteResponse response = voteService.vote(id, voteRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/agendas/{id}/result")
+    public ResponseEntity<AgendaResultResponse> getResult(@PathVariable Long id) {
+        AgendaResultResponse response = agendaService.getAgendaResult(id);
         return ResponseEntity.ok(response);
     }
 }
