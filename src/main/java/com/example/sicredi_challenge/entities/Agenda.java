@@ -36,6 +36,14 @@ public class Agenda {
         this.createdAt = LocalDateTime.now();
     }
 
+    public void open(Integer votingPeriod) {
+        int period = (votingPeriod != null && votingPeriod > 0) ? votingPeriod : 1;
+        LocalDateTime now = LocalDateTime.now();
+        this.openedAt = now;
+        this.votingPeriod = period;
+        this.expiredAt = now.plusMinutes(period);
+    }
+
     public Long getId() {
         return id;
     }
