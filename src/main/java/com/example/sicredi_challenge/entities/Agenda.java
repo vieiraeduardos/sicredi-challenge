@@ -44,6 +44,13 @@ public class Agenda {
         this.expiredAt = now.plusMinutes(period);
     }
 
+    public boolean isOpen() {
+        if (openedAt == null || expiredAt == null) {
+            return false;
+        }
+        return LocalDateTime.now().isBefore(expiredAt);
+    }
+
     public Long getId() {
         return id;
     }

@@ -5,6 +5,7 @@ import com.example.sicredi_challenge.entities.dtos.CreateAgendaRequest;
 import com.example.sicredi_challenge.entities.dtos.CreateAgendaResponse;
 import com.example.sicredi_challenge.entities.dtos.UpdateAgendaRequest;
 import com.example.sicredi_challenge.repositories.AgendaRepository;
+import com.example.sicredi_challenge.repositories.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,9 @@ import org.springframework.stereotype.Service;
 public class AgendaService {
     @Autowired
     private AgendaRepository agendaRepository;
+
+    @Autowired
+    private VoteRepository voteRepository;
 
     public CreateAgendaResponse createAgenda(CreateAgendaRequest createAgendaRequest) {
         Agenda agenda = new Agenda(
