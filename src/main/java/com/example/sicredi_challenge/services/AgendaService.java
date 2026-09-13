@@ -6,6 +6,7 @@ import com.example.sicredi_challenge.entities.dtos.CreateAgendaRequest;
 import com.example.sicredi_challenge.entities.dtos.CreateAgendaResponse;
 import com.example.sicredi_challenge.entities.dtos.UpdateAgendaRequest;
 import com.example.sicredi_challenge.entities.enums.VoteChoice;
+import com.example.sicredi_challenge.exceptions.ResourceNotFoundException;
 import com.example.sicredi_challenge.repositories.AgendaRepository;
 import com.example.sicredi_challenge.repositories.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class AgendaService {
     }
 
     public CreateAgendaResponse openAgenda(Long id, UpdateAgendaRequest updateAgendaRequest) {
-        Agenda agenda = agendaRepository.findById(id).orElseThrow(() -> new RuntimeException("Agenda não encontrada."));
+        Agenda agenda = agendaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agenda não encontrada."));
         Integer period = (updateAgendaRequest != null) ? updateAgendaRequest.votingPeriod() : null;
         agenda.open(period);
         Agenda response = agendaRepository.save(agenda);
@@ -39,7 +40,7 @@ public class AgendaService {
 
     public AgendaResultResponse getAgendaResult(Long id) {
         Agenda agenda = agendaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pauta não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Pauta não encontrada."));
 
         long totalYes = voteRepository.countByAgendaIdAndChoice(id, VoteChoice.SIM);
         long totalNo = voteRepository.countByAgendaIdAndChoice(id, VoteChoice.NAO);

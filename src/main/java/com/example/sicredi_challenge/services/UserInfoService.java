@@ -2,6 +2,8 @@ package com.example.sicredi_challenge.services;
 
 import com.example.sicredi_challenge.clients.UserInfoClient;
 import com.example.sicredi_challenge.entities.dtos.UserInfoResponse;
+import com.example.sicredi_challenge.exceptions.BusinessException;
+import com.example.sicredi_challenge.exceptions.ResourceNotFoundException;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,15 +18,15 @@ public class UserInfoService {
         try {
             UserInfoResponse response = userInfoClient.checkCpfStatus(cpf);
             if (response == null || !response.isAbleToVote()) {
-                throw new RuntimeException("Associado não está habilitado para votar (UNABLE_TO_VOTE).");
+                throw new BusinessException("Associado não está habilitado para votar (UNABLE_TO_VOTE).");
             }
         } catch (FeignException.NotFound e) {
-            throw new RuntimeException("CPF do associado é inválido ou não foi encontrado.");
+            throw new ResourceNotFoundException("CPF do associado é inválido ou não foi encontrado.");
         } catch (Exception e) {
             if (e instanceof RuntimeException && !(e instanceof FeignException)) {
                 throw (RuntimeException) e;
             }
-            throw new RuntimeException("Serviço de verificação de CPF indisponível ou com erro. Voto não permitido.", e);
+            throw new BusinessException("Serviço de verificação de CPF indisponível ou com erro. Voto não permitido.");
         }
     }
 }
