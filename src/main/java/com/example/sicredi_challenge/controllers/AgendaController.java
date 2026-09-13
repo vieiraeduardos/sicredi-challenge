@@ -28,7 +28,7 @@ public class AgendaController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/agendas/{id}")
+    @PostMapping("/agendas/{id}")
     public ResponseEntity<CreateAgendaResponse> openAgenda(@PathVariable Long id, @RequestBody(required = false) UpdateAgendaRequest updateAgendaRequest) {
         CreateAgendaResponse response = agendaService.openAgenda(id, updateAgendaRequest);
         return ResponseEntity.ok(response);
