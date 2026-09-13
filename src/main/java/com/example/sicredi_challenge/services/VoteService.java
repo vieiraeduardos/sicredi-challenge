@@ -19,6 +19,9 @@ public class VoteService {
     @Autowired
     private AgendaRepository agendaRepository;
 
+    @Autowired
+    private UserInfoService userInfoService;
+
     public VoteResponse vote(Long agendaId, VoteRequest voteRequest) {
         Agenda agenda = agendaRepository.findById(agendaId)
                 .orElseThrow(() -> new RuntimeException("Pauta não encontrada."));
@@ -34,6 +37,8 @@ public class VoteService {
         if (voteRepository.existsByAgendaIdAndAssociateId(agendaId, voteRequest.associateId())) {
             throw new RuntimeException("Associado já votou nesta pauta.");
         }
+
+        userInfoService.validateAssociateCanVote(voteRequest.associateId());
 
         VoteChoice choice = VoteChoice.fromString(voteRequest.vote());
 
