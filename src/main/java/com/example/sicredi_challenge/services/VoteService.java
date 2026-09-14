@@ -9,6 +9,7 @@ import com.example.sicredi_challenge.exceptions.BusinessException;
 import com.example.sicredi_challenge.exceptions.ResourceNotFoundException;
 import com.example.sicredi_challenge.repositories.AgendaRepository;
 import com.example.sicredi_challenge.repositories.VoteRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,12 @@ public class VoteService {
     private UserInfoService userInfoService;
 
     public VoteResponse vote(Long agendaId, VoteRequest voteRequest) {
+        if (voteRequest == null || voteRequest.associateId() == null || voteRequest.associateId().isBlank()) {
+            throw new BusinessException("Os campos 'associate_id' e 'vote' são obrigatórios.");
+        }
+
+        VoteChoice choice = VoteChoice.fromString(voteRequest.vote());
+
         Agenda agenda = agendaRepository.findById(agendaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pauta não encontrada."));
 
@@ -32,21 +39,14 @@ public class VoteService {
             throw new BusinessException("A votação para esta pauta não está aberta ou já foi encerrada.");
         }
 
-        if (voteRequest == null || voteRequest.associateId() == null || voteRequest.associateId().isBlank()) {
-            throw new BusinessException("O ID do associado é obrigatório.");
-        }
-
-        if (voteRepository.existsByAgendaIdAndAssociateId(agendaId, voteRequest.associateId())) {
-            throw new BusinessException("Associado já votou nesta pauta.");
-        }
-
         userInfoService.validateAssociateCanVote(voteRequest.associateId());
 
-        VoteChoice choice = VoteChoice.fromString(voteRequest.vote());
-
         Vote vote = new Vote(agenda, voteRequest.associateId(), choice);
-        Vote response = voteRepository.save(vote);
-
-        return new VoteResponse(response);
+        try {
+            Vote response = voteRepository.saveAndFlush(vote);
+            return new VoteResponse(response);
+        } catch (DataIntegrityViolationException exception) {
+            throw new BusinessException("Associado já votou nesta pauta.");
+        }
     }
 }

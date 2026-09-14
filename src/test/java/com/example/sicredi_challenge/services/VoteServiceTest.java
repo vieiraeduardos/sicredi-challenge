@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 
@@ -42,15 +43,14 @@ class VoteServiceTest {
         agenda.open(10);
         VoteRequest request = new VoteRequest("12345678900", "Sim");
         when(agendaRepository.findById(1L)).thenReturn(Optional.of(agenda));
-        when(voteRepository.existsByAgendaIdAndAssociateId(1L, request.associateId())).thenReturn(false);
-        when(voteRepository.save(any(Vote.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(voteRepository.saveAndFlush(any(Vote.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         VoteResponse response = voteService.vote(1L, request);
 
         assertEquals("12345678900", response.associateId());
         assertEquals("SIM", response.vote());
         verify(userInfoService).validateAssociateCanVote(request.associateId());
-        verify(voteRepository).save(any(Vote.class));
+        verify(voteRepository).saveAndFlush(any(Vote.class));
     }
 
     @Test
@@ -91,12 +91,15 @@ class VoteServiceTest {
         Agenda agenda = new Agenda("Assembleia", "Pauta anual");
         agenda.open(10);
         when(agendaRepository.findById(1L)).thenReturn(Optional.of(agenda));
-        when(voteRepository.existsByAgendaIdAndAssociateId(1L, "123")).thenReturn(true);
+        when(voteRepository.saveAndFlush(any(Vote.class)))
+            .thenThrow(new DataIntegrityViolationException("violação da constraint de voto único"));
 
-        assertThrows(BusinessException.class,
-                () -> voteService.vote(1L, new VoteRequest("123", "Não")));
-        verifyNoInteractions(userInfoService);
-        verify(voteRepository, never()).save(any());
+        BusinessException exception = assertThrows(BusinessException.class,
+            () -> voteService.vote(1L, new VoteRequest("123", "Não")));
+
+        assertEquals("Associado já votou nesta pauta.", exception.getMessage());
+        verify(userInfoService).validateAssociateCanVote("123");
+        verify(voteRepository).saveAndFlush(any(Vote.class));
     }
 
     @Test
@@ -104,11 +107,9 @@ class VoteServiceTest {
         Agenda agenda = new Agenda("Assembleia", "Pauta anual");
         agenda.open(10);
         when(agendaRepository.findById(1L)).thenReturn(Optional.of(agenda));
-        when(voteRepository.existsByAgendaIdAndAssociateId(1L, "123")).thenReturn(false);
 
         assertThrows(IllegalArgumentException.class,
                 () -> voteService.vote(1L, new VoteRequest("123", "Talvez")));
-        verify(userInfoService).validateAssociateCanVote("123");
-        verify(voteRepository, never()).save(any());
+        verifyNoInteractions(userInfoService, voteRepository);
     }
 }
