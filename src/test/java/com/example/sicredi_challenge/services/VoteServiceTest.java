@@ -1,20 +1,16 @@
 package com.example.sicredi_challenge.services;
 
 import com.example.sicredi_challenge.entities.Agenda;
-import com.example.sicredi_challenge.entities.Vote;
 import com.example.sicredi_challenge.entities.dtos.VoteRequest;
 import com.example.sicredi_challenge.entities.dtos.VoteResponse;
-import com.example.sicredi_challenge.entities.enums.VoteChoice;
 import com.example.sicredi_challenge.exceptions.BusinessException;
 import com.example.sicredi_challenge.exceptions.ResourceNotFoundException;
 import com.example.sicredi_challenge.repositories.AgendaRepository;
-import com.example.sicredi_challenge.repositories.VoteRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 
@@ -26,13 +22,13 @@ import static org.mockito.Mockito.*;
 class VoteServiceTest {
 
     @Mock
-    private VoteRepository voteRepository;
-
-    @Mock
     private AgendaRepository agendaRepository;
 
     @Mock
     private UserInfoService userInfoService;
+
+    @Mock
+    private VotePersistenceService votePersistenceService;
 
     @InjectMocks
     private VoteService voteService;
@@ -43,14 +39,15 @@ class VoteServiceTest {
         agenda.open(10);
         VoteRequest request = new VoteRequest("12345678900", "Sim");
         when(agendaRepository.findById(1L)).thenReturn(Optional.of(agenda));
-        when(voteRepository.saveAndFlush(any(Vote.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(votePersistenceService.save(any(), eq(request.associateId()), any()))
+            .thenReturn(new VoteResponse(1L, 1L, request.associateId(), "SIM", null));
 
         VoteResponse response = voteService.vote(1L, request);
 
         assertEquals("12345678900", response.associateId());
         assertEquals("SIM", response.vote());
         verify(userInfoService).validateAssociateCanVote(request.associateId());
-        verify(voteRepository).saveAndFlush(any(Vote.class));
+        verify(votePersistenceService).save(any(), eq(request.associateId()), any());
     }
 
     @Test
@@ -59,7 +56,7 @@ class VoteServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> voteService.vote(1L, new VoteRequest("123", "Sim")));
-        verifyNoInteractions(userInfoService, voteRepository);
+        verifyNoInteractions(userInfoService, votePersistenceService);
     }
 
     @Test
@@ -71,7 +68,7 @@ class VoteServiceTest {
                 () -> voteService.vote(1L, new VoteRequest("123", "Sim")));
 
         assertEquals("A votação para esta pauta não está aberta ou já foi encerrada.", exception.getMessage());
-        verifyNoInteractions(userInfoService, voteRepository);
+        verifyNoInteractions(userInfoService, votePersistenceService);
     }
 
     @Test
@@ -83,23 +80,22 @@ class VoteServiceTest {
         assertThrows(BusinessException.class,
                 () -> voteService.vote(1L, new VoteRequest(" ", "Sim")));
         verifyNoInteractions(userInfoService);
-        verify(voteRepository, never()).save(any());
+        verifyNoInteractions(votePersistenceService);
     }
 
     @Test
-    void deveRejeitarVotoDuplicado() {
+    void deveDelegarPersistenciaParaUmaUnicaTransacao() {
         Agenda agenda = new Agenda("Assembleia", "Pauta anual");
         agenda.open(10);
         when(agendaRepository.findById(1L)).thenReturn(Optional.of(agenda));
-        when(voteRepository.saveAndFlush(any(Vote.class)))
-            .thenThrow(new DataIntegrityViolationException("violação da constraint de voto único"));
+        when(votePersistenceService.save(any(), eq("123"), any()))
+                .thenReturn(new VoteResponse(1L, 1L, "123", "NAO", null));
 
-        BusinessException exception = assertThrows(BusinessException.class,
-            () -> voteService.vote(1L, new VoteRequest("123", "Não")));
+        VoteResponse response = voteService.vote(1L, new VoteRequest("123", "Não"));
 
-        assertEquals("Associado já votou nesta pauta.", exception.getMessage());
+        assertEquals("NAO", response.vote());
         verify(userInfoService).validateAssociateCanVote("123");
-        verify(voteRepository).saveAndFlush(any(Vote.class));
+        verify(votePersistenceService).save(any(), eq("123"), any());
     }
 
     @Test
@@ -110,6 +106,6 @@ class VoteServiceTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> voteService.vote(1L, new VoteRequest("123", "Talvez")));
-        verifyNoInteractions(userInfoService, voteRepository);
+        verifyNoInteractions(userInfoService, votePersistenceService);
     }
 }

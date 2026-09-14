@@ -1,15 +1,12 @@
 package com.example.sicredi_challenge.services;
 
 import com.example.sicredi_challenge.entities.Agenda;
-import com.example.sicredi_challenge.entities.Vote;
 import com.example.sicredi_challenge.entities.dtos.VoteRequest;
 import com.example.sicredi_challenge.entities.dtos.VoteResponse;
 import com.example.sicredi_challenge.entities.enums.VoteChoice;
 import com.example.sicredi_challenge.exceptions.BusinessException;
 import com.example.sicredi_challenge.exceptions.ResourceNotFoundException;
 import com.example.sicredi_challenge.repositories.AgendaRepository;
-import com.example.sicredi_challenge.repositories.VoteRepository;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,13 +14,13 @@ import org.springframework.stereotype.Service;
 public class VoteService {
 
     @Autowired
-    private VoteRepository voteRepository;
-
-    @Autowired
     private AgendaRepository agendaRepository;
 
     @Autowired
     private UserInfoService userInfoService;
+
+    @Autowired
+    private VotePersistenceService votePersistenceService;
 
     public VoteResponse vote(Long agendaId, VoteRequest voteRequest) {
         if (voteRequest == null || voteRequest.associateId() == null || voteRequest.associateId().isBlank()) {
@@ -41,12 +38,6 @@ public class VoteService {
 
         userInfoService.validateAssociateCanVote(voteRequest.associateId());
 
-        Vote vote = new Vote(agenda, voteRequest.associateId(), choice);
-        try {
-            Vote response = voteRepository.saveAndFlush(vote);
-            return new VoteResponse(response);
-        } catch (DataIntegrityViolationException exception) {
-            throw new BusinessException("Associado já votou nesta pauta.");
-        }
+        return votePersistenceService.save(agenda, voteRequest.associateId(), choice);
     }
 }
