@@ -254,6 +254,22 @@ O pipeline do GitHub Actions é executado em pushes na branch `main` ou manualme
 - **Azure:** atende à necessidade de hospedagem gerenciada e integração com o pipeline de entrega.
 - **GitHub Actions:** automatiza build e publicação com integração direta ao repositório e ao Azure.
 
+## Próximos passos
+
+- **Segurança e controle de acesso:** Adicionar Spring Security com autenticação JWT, autorização por perfil e proteção dos endpoints de criação, abertura e votação. Também validar rate limiting e políticas de CORS.
+
+- **Pool de conexões:** O HikariCP já é utilizado pelo Spring Boot com configurações padrão. Com base nos testes de performance, o próximo passo é medir o consumo real de conexões e ajustar `maximum-pool-size`, `minimum-idle`, timeouts e `max-lifetime` conforme os limites do PostgreSQL e a quantidade de instâncias da aplicação.
+
+- **Infraestrutura Azure:** Os recursos atuais são adequados para desenvolvimento e validação inicial. Para produção, devem ser avaliados o dimensionamento do App Service, o limite de conexões do Azure Database for PostgreSQL, backups, alta disponibilidade, escalabilidade automática e custos.
+
+- **Migrations de banco:** Substituir o `ddl-auto: update` por migrations versionadas com Flyway, garantindo mudanças de schema rastreáveis e seguras entre ambientes.
+
+- **Observabilidade:** O Logback já registra timestamp, nível, `requestId`, método, caminho, status e duração. Como evolução, integrar OpenTelemetry para exportar traces, métricas e logs para ferramentas como Grafana, Datadog ou Dynatrace.
+
+- **Resiliência da integração externa:** Adicionar timeout, retry controlado, circuit breaker e fallback para o serviço de validação de associados, evitando que indisponibilidades externas afetem toda a aplicação.
+
+- **Performance contínua:** Repetir os testes de carga após cada alteração de infraestrutura ou configuração, acompanhando RPS, P95, P99, erros, uso de CPU, memória e conexões do banco.
+
 ## Estrutura principal
 
 ```text
