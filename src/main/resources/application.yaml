@@ -16,6 +16,6 @@ spring:
       ddl-auto: update
 
 app:
-  host: http://localhost:8080
+  host: ${APP_HOST:http://localhost:8080}
   sicredi-user-info:
     url: https://user-info.herokuapp.com
