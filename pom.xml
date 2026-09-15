@@ -70,6 +70,12 @@
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
+			<groupId>io.gatling.highcharts</groupId>
+			<artifactId>gatling-charts-highcharts</artifactId>
+			<version>3.15.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator-test</artifactId>
 			<scope>test</scope>
@@ -114,10 +120,16 @@
 								<exclude>com/example/sicredi_challenge/entities/dtos/**</exclude>
 								<exclude>com/example/sicredi_challenge/exceptions/**</exclude>
 								<exclude>com/example/sicredi_challenge/repositories/**</exclude>
+								<exclude>com/example/sicredi_challenge/logging/**</exclude>
 							</excludes>
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>io.gatling</groupId>
+				<artifactId>gatling-maven-plugin</artifactId>
+				<version>4.21.12</version>
 			</plugin>
 		</plugins>
 	</build>

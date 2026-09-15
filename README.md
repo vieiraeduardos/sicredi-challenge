@@ -232,6 +232,25 @@ Foi utilizado o Locust para avaliar o comportamento da API sob diferentes nívei
 
 Os resultados indicam degradação progressiva da latência e do RPS a partir de 200 usuários concorrentes, especialmente no cenário de 500 usuários. O teste não apresentou falhas, mas evidencia a necessidade de investigar dimensionamento da aplicação, pool de conexões, banco de dados e limites da infraestrutura para cargas maiores.
 
+### Comparação das configurações do pool
+
+Nesse segundo momento foi utilizado o Gatling como ferramenta de testes de carga.
+
+A tabela abaixo consolida os testes de carga realizados com 500 usuários, ramp-up de 30 segundos e duração máxima de 5 minutos. Os testes foram realizados em momentos diferentes; por isso, os valores devem ser interpretados como uma evolução indicativa, e não como um benchmark perfeitamente controlado.
+
+| Configuração / etapa | Throughput | Média | P95 | P99 | Máximo |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Hikari `10/2` | 496,21 req/s | 956 ms | 1.641 ms | 2.235 ms | 4.781 ms |
+| Hikari `30/3` | 696,99 req/s | 681 ms | 1.460 ms | 2.217 ms | 6.431 ms |
+| Hikari `30/3` + ajustes iniciais | 744,87 req/s | 637 ms | 1.430 ms | 2.291 ms | 8.902 ms |
+| Hikari `30/3` + transação única | 817,06 req/s | 581 ms | 1.296 ms | 2.017 ms | 6.176 ms |
+| Hikari `30/3` + logs reduzidos | 831,57 req/s | 570 ms | 1.305 ms | 2.050 ms | 6.281 ms |
+| Hikari `50/3` | 913,11 req/s | 519 ms | 1.376 ms | 2.474 ms | 9.874 ms |
+
+O pool `50/3` apresentou o maior throughput e a menor média, mas o P95 e o P99 ficaram acima dos melhores resultados obtidos com `30/3` após a transação única. Isso indica que o pool maior aumenta a capacidade total, mas também pode elevar a latência da cauda quando o banco está saturado. A configuração deve ser escolhida considerando o equilíbrio entre throughput, P95, P99 e recursos disponíveis no PostgreSQL.
+
+![Resultado do teste de performance com Gatling](src/main/resources/screenshots/gatling-screenshot.png)
+
 ## Infraestrutura e CI/CD
 
 A aplicação é preparada para execução em Docker e foi implantada no Azure App Service, com PostgreSQL gerenciado no Azure Database for PostgreSQL. A infraestrutura informada do banco é:

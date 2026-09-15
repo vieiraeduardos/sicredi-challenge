@@ -73,10 +73,6 @@ class VoteServiceTest {
 
     @Test
     void deveRejeitarAssociadoSemIdentificador() {
-        Agenda agenda = new Agenda("Assembleia", "Pauta anual");
-        agenda.open(10);
-        when(agendaRepository.findById(1L)).thenReturn(Optional.of(agenda));
-
         assertThrows(BusinessException.class,
                 () -> voteService.vote(1L, new VoteRequest(" ", "Sim")));
         verifyNoInteractions(userInfoService);
@@ -100,10 +96,6 @@ class VoteServiceTest {
 
     @Test
     void deveRejeitarVotoComOpcaoInvalida() {
-        Agenda agenda = new Agenda("Assembleia", "Pauta anual");
-        agenda.open(10);
-        when(agendaRepository.findById(1L)).thenReturn(Optional.of(agenda));
-
         assertThrows(IllegalArgumentException.class,
                 () -> voteService.vote(1L, new VoteRequest("123", "Talvez")));
         verifyNoInteractions(userInfoService, votePersistenceService);
